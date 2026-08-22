@@ -138,7 +138,6 @@ def llmDescribeCapture(scope, args):
 def idFunc(scope, args):
     print(scope.query("*IDN?"))
         
-
 class Action :
     def __init__(self, argc, func, des):
         self.argc = argc
@@ -160,7 +159,7 @@ actionMap = {
 #unique error action that is the default value for the map
 errorAction=Action(0, errorFunc, "Error")
 
-def help(scope, args):
+def helpFunc(scope, args):
     print("""o-see-lloscope -- help
     
     An application for the Visually impared to allow full access to oscilloscope measuring
@@ -170,3 +169,5 @@ def help(scope, args):
 
         #needs to be after declaration of actionmap
         actionMap["help"] = Action(0, helpFunc, "prints help messages for all commands")
+
+
