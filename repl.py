@@ -7,23 +7,26 @@ import actions
 
 def startREPL(scope):
     while True:
-        print("> ")
-        #read
-        textInput = input().split() 
-        cmd= textInput[0]
-        args = textInput[1:]
+        try:
+            print("> ")
+            #read
+            textInput = input().split() 
+            cmd= textInput[0]
+            args = textInput[1:]
 
-        if cmd == "q" or cmd == "quit":
-            print("Exiting...")
-            break
+            if cmd == "q" or cmd == "quit":
+                print("Exiting...")
+                break
 
-        #lookup and check argc
-        action = actions.actionMap.get(cmd, actions.errorAction) #provide default fallback if cmd not found
+            #lookup and check argc
+            action = actions.actionMap.get(cmd, actions.errorAction) #provide default fallback if cmd not found
 
-        if action.argc != len(args):
-            print(cmd, " requires arg length of ", action.argc)
-            continue
+            if action.argc != len(args):
+                print(cmd, " requires arg length of ", action.argc)
+                continue
 
-        #execute
-        action.func(scope, args)
-                    
+            #execute
+            action.func(scope, args)
+        except Exception as e:
+            # maybe reset state here
+            print("an exception occured:", e)

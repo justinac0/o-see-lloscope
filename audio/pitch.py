@@ -3,7 +3,7 @@ import sounddevice as sd
 from scipy import signal as sig
 
 
-def play_from_voltage(voltage_data, duration_seconds=5, output_sample_rate=44100, freq_min=600, freq_max=7000, log_scale=False):
+def play_from_voltage(voltage_data, duration_seconds=5, output_sample_rate=44100, freq_min=1000, freq_max=8000, log_scale=False):
     """
 
     """

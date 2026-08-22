@@ -16,5 +16,6 @@ scope.chunk_size = 1024 * 1024
 
 print(scope.query("*IDN?"))
 
-# main loop
-repl.startREPL(scope)
+if __name__ == "__main__":
+    repl.startREPL(scope)
+
