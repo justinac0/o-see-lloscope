@@ -105,7 +105,6 @@ def playPrevCapture(scope, args):
 
     pitch.play_from_voltage(previous_voltage_capture)
 
-
 def llmDescribeCapture(scope, args):
     chat = llm()
 
@@ -125,24 +124,32 @@ def llmDescribeCapture(scope, args):
         prompt = input("\nChat: ")
         if (prompt == 'q') or (prompt == 'Q'): break
         chat.query(prompt=prompt)
-
-        
+    
 class Action :
-    def __init__(self, argc, func):
+    def __init__(self, argc, func, des):
         self.argc = argc
         self.func = func
-
+        self.des = des
 
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
-    "test": Action(1, testFunc),
-    "auto": Action(0, autoFunc),
-    "measure": Action(0, measureFunc),
-    "capture": Action(0, captureFunc),
-    "playback": Action(0, playPrevCapture),
-    "describe": Action(0, llmDescribeCapture),
+    "test": Action(1, testFunc, "A test action"),
+    "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal"),
+    "measure": Action(0, measureFunc, "Provides a summary of the signal"),
+    "capture": Action(0, captureFunc, "Saves a png and csv and updates the program state"),
+    "trigger": Action(3, triggerFunc, "Configures a trigger on channel 1"),
+    "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal"),
+    "describe": Action(0, llmDescribeCapture, "Enters a conversation with a LLM to allow the generated graph to be queried."),
 }
 
 #unique error action that is the default value for the map
-errorAction=Action(0, errorFunc)
+errorAction=Action(0, errorFunc, "Error")
 
+
+def help(scope, args):
+    print("""o-see-lloscope -- help
+    
+    An application for the Visually impared to allow full access to oscilloscope measuring
+    """)
+for key, value in actionMap.items():
+        print (key + " : ", value.argc, " args.\n    " + value.des)
