@@ -6,6 +6,9 @@ import actions
 #and then loops back
 
 def startREPL(scope):
+    print("o-see-lloscope REPL, type a command and press enter to execute an action.")
+    print("(type 'help' for action manual)")
+
     while True:
         try:
             print("> ")
@@ -15,7 +18,7 @@ def startREPL(scope):
             args = textInput[1:]
 
             if cmd == "q" or cmd == "quit":
-                print("Exiting...")
+                print("exiting...")
                 break
 
             #lookup and check argc
@@ -23,6 +26,7 @@ def startREPL(scope):
 
             if action.argc != len(args):
                 print(cmd, " requires arg length of ", action.argc)
+                # TODO: print usage here as well
                 continue
 
             #execute

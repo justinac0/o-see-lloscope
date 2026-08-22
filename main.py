@@ -6,16 +6,16 @@
 import pyvisa
 import repl
 
-# connecting to device and takinng some basic measurements
-rm = pyvisa.ResourceManager()
-print(rm.list_resources())
-
-scope = rm.open_resource("USB0::6833::1230::DS1ZA281900965::0::INSTR")
-scope.timeout = 30000
-scope.chunk_size = 1024 * 1024
-
-print(scope.query("*IDN?"))
-
 if __name__ == "__main__":
-    repl.startREPL(scope)
+    # connecting to device and takinng some basic measurements
+    rm = pyvisa.ResourceManager()
+    if len(rm.list_resources()) > 0:
+        uid = "USB0::6833::1230::DS1ZA281900965::0::INSTR"
+        scope = rm.open_resource(uid)
+        scope.timeout = 30000
+        scope.chunk_size = 1024 * 1024
+
+        repl.startREPL(scope)
+    else:
+        print("no devices found, is your oscilloscope connected?")
 
