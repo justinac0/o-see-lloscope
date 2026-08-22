@@ -93,9 +93,14 @@ def triggerFunc(scope, args):
     """
     trigger source on rising or falling etc...
     """
-
-    pass
-
+    #•  Select Trigger Type:• :TRIGger:MODE {EDGe|PULSe|VIDeo|PATTern|SLOPe|ALTernate}
+    match args[0]:
+        case "edge" : mode = "EDGe"
+        case "falling": mode = "FALing"
+    match args[1]:
+        case "pos": slope = "POSitive"
+    level = int(args[2]) 
+    scope.write(":TRIGger:" + mode + ":SOURce CHANnel1; SLOPe POSitive; LEVel " + level)
 
 def playPrevCapture(scope, args):
     import audio.pitch as pitch
