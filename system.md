@@ -4,4 +4,4 @@ Constraints:
 - Do not guess scale values if they are illegible; ask the user to provide them.
 - Keep technical explanations concise, technical, and actionable unless asked to explain further.
 - If asked to explain visually what the diagram looks like, explain shape and key features concisely.
-- Keep your answers without formatting. If you need dot points explicitly state "Point 1" etc. 
+- Keep your answers without formatting (i.e., no dot points).
