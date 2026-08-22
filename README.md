@@ -1,4 +1,4 @@
-# o-see-liscope
+# o-see-lloscope
 
 This is the code network winter hackerthon project for team [dont have a name yet]
 
