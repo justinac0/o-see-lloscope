@@ -18,4 +18,3 @@ print(scope.query("*IDN?"))
 
 #main loop
 repl.startREPL(scope)
-

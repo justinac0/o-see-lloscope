@@ -7,4 +7,4 @@
 
 ## user story
 turn oscilloscope on an connect usb
-- 
+- Ideally  

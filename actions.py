@@ -62,7 +62,7 @@ def captureFunc(scope, args):
     np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
 
 def triggerFunc(scope, args):
-    
+    pass
 
 class Action :
     def __init__(self, argc, func):
