@@ -16,7 +16,8 @@ try:
     scope.chunk_size = 1024 * 1024
 
     print(scope.query("*IDN?"))
-except:
+except Exception as e:
+    print("Exception: ", e)
     scope = None
 
 if __name__ == "__main__":
