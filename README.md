@@ -25,3 +25,20 @@ currently and hopefully will have a non-sudo solution soon.
 
 - [SCPI Through Python](https://testflowinc.com/blog/automate-rigol-oscilloscope-python-scpi-pyvisa-guide)
 
+# Features
+
+Must-have: 
+1. Capturing data such as vpp, frequency, voltage, average voltage, amplitude
+2. Manual adjustment and scaling of measurements such as frequency, etc
+3. Provide full access to someone who's screen readers or provide alternative options 
+
+Should-have:
+1. Machine learning model that describe noise and provide descriptions 
+2. Tone generation 
+
+Could-have: 
+1. Plots with customizable colors and line thicknesses 
+2. Navigate through the data 
+
+
+
