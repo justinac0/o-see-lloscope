@@ -41,8 +41,17 @@ def measureFunc(scope, args):
 def captureFunc(scope, args):
     global previous_voltage_capture
 
+    chn = args[0]
+    
+    chn_col = {
+        "1": "y",
+        "2": "a",
+        "3": "m",
+        "4": "b",
+    }
+
     # getting some raw binary data from device
-    scope.write(":WAVeform:SOURce CHANnel1")
+    scope.write(f":WAVeform:SOURce CHANnel{chn}")
     scope.write(":WAVeform:MODE NORMal")
     scope.write(":WAVeform:FORMat BYTE")
 
@@ -70,12 +79,13 @@ def captureFunc(scope, args):
 
     previous_voltage_capture = volts
 
-    # plotting some data
-    plt.plot(time_s * 1e3, volts)
+    plt.clf()  # clear the current figure
+    plt.plot(time_s * 1e3, volts, c=chn_col[chn])
     plt.xlabel("Time (ms)")
     plt.ylabel("Voltage (V)")
     plt.title("Rigol DS1054Z capture")
     plt.savefig("capture.png", dpi=150)
+    plt.close()  # free memory, avoids figure buildup
     np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
 
 
@@ -121,6 +131,10 @@ def llmDescribeCapture(scope, args):
         if (prompt == 'q') or (prompt == 'Q'): break
         chat.query(prompt=prompt)
 
+
+def idFunc(scope, args):
+    print(scope.query("*IDN?"))
+
         
 class Action :
     def __init__(self, argc, func):
@@ -130,10 +144,11 @@ class Action :
 
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
+    "id": Action(0, idFunc),
     "test": Action(1, testFunc),
     "auto": Action(0, autoFunc),
     "measure": Action(0, measureFunc),
-    "capture": Action(0, captureFunc),
+    "capture": Action(1, captureFunc),
     "playback": Action(0, playPrevCapture),
     "describe": Action(0, llmDescribeCapture),
 }
