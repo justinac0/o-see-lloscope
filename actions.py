@@ -124,7 +124,8 @@ def llmDescribeCapture(scope, args):
         prompt = input("\nChat: ")
         if (prompt == 'q') or (prompt == 'Q'): break
         chat.query(prompt=prompt)
-    
+
+
 class Action :
     def __init__(self, argc, func, des):
         self.argc = argc
@@ -134,6 +135,7 @@ class Action :
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
     "test": Action(1, testFunc, "A test action"),
+    
     "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal"),
     "measure": Action(0, measureFunc, "Provides a summary of the signal"),
     "capture": Action(0, captureFunc, "Saves a png and csv and updates the program state"),
@@ -142,14 +144,14 @@ actionMap = {
     "describe": Action(0, llmDescribeCapture, "Enters a conversation with a LLM to allow the generated graph to be queried."),
 }
 
-#unique error action that is the default value for the map
-errorAction=Action(0, errorFunc, "Error")
-
-
-def help(scope, args):
+def helpFunc(scope, args):
     print("""o-see-lloscope -- help
     
     An application for the Visually impared to allow full access to oscilloscope measuring
     """)
-for key, value in actionMap.items():
+    for key, value in actionMap.items():
         print (key + " : ", value.argc, " args.\n    " + value.des)
+
+
+#add to map after so helpFunc has accesss to the map
+actionMap["help"] = Action(0, helpFunc, "Provides help messages for each available command")

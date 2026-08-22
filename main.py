@@ -6,7 +6,7 @@
 import pyvisa
 import repl
 
-def init():
+try:
     # connecting to device and takinng some basic measurements
     rm = pyvisa.ResourceManager()
     print(rm.list_resources())
@@ -16,9 +16,8 @@ def init():
     scope.chunk_size = 1024 * 1024
 
     print(scope.query("*IDN?"))
-
-#comment out to test non scope parts of app
-init()
+except:
+    scope = None
 
 if __name__ == "__main__":
     repl.startREPL(scope)
