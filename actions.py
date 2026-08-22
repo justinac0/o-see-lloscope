@@ -27,7 +27,6 @@ def measure(scope, item, channel="CHANnel1"):
     return float(scope.query(f":MEASure:ITEM? {item},{channel}"))
 
 def measureFunc(scope, args):
-
     scope.write(":AUToscale")
     vpp  = measure(scope, "VPP")
     freq = measure(scope, "FREQuency")
@@ -109,8 +108,9 @@ class Action :
 actionMap = {
     "test": Action(1, testFunc),
     "auto": Action(0, autoFunc),
+    "measure": Action(0, measureFunc),
     "capture": Action(0, captureFunc),
-    "play_capture": Action(0, playPrevCapture),
+    "playback": Action(0, playPrevCapture),
 }
 
 #unique error action that is the default value for the map
