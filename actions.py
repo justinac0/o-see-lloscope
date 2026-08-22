@@ -1,5 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import llm
+from pathlib import Path
 
 
 # NOTE(everyone): actions interacting with channel data assume we
@@ -98,6 +101,27 @@ def playPrevCapture(scope, args):
     pitch.play_from_voltage(previous_voltage_capture)
 
 
+def llmDescribeCapture(scope, args):
+    chat = llm()
+
+    if not Path("capture.png").is_file():
+        print("Capture does not exist! Please capture waveform first.")
+        return
+
+    print("What would you like described? Type q or ctrl+ c to exit.")
+    prompt = input("Chat: ")
+
+    with open("capture.png", "rb") as image_file:
+        image_bytes = image_file.read()
+
+    chat.query(prompt=prompt, image_bytes=image_bytes)
+
+    while True:
+        prompt = input("\nChat: ")
+        if (prompt == 'q') or (prompt == 'Q'): break
+        chat.query(prompt=prompt)
+
+        
 class Action :
     def __init__(self, argc, func):
         self.argc = argc
@@ -111,6 +135,7 @@ actionMap = {
     "measure": Action(0, measureFunc),
     "capture": Action(0, captureFunc),
     "playback": Action(0, playPrevCapture),
+    "describe": Action(0, llmDescribeCapture),
 }
 
 #unique error action that is the default value for the map
