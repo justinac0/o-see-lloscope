@@ -343,7 +343,7 @@ actionMap = {
  
     "run": Action(0, runFunc, "Starts waveform acquisition on the oscilloscope",
         usage="run",
-        explample="run"),
+        expample="run"),
 
   """
     "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal",
