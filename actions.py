@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 from llm import llm
 from pathlib import Path
+import numpy as np
 
 
 # Globals
@@ -86,6 +87,7 @@ def captureFunc(scope, args):
     plt.close()  # free memory, avoids figure buildup
     np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
 
+    
 triggerModes = {
     "edge": "EDGe",
     "pulse": "PULSe",
@@ -107,6 +109,7 @@ triggerModes = {
     "i2c": "IIC",
     "spi": "SPI",
 }
+
 
 triggerSlopes = {
     "pos": "POSitive",
@@ -187,6 +190,7 @@ def triggerInfoFunc(scope, args):
 
     print(f"Trigger Settings: Mode={mode}, Source={source}, Slope={slope}, Level={level_str}, Sweep={sweep}, Coupling={coupling}, Status={status}")
 
+    
 def playPrevCapture(scope, args):
     import audio.pitch as pitch
     """
@@ -228,13 +232,15 @@ def idFunc(scope, args):
 
 def clearFunc(scope, args):
     os.system("clear")
-        
+    
 
-class Action :
-    def __init__(self, argc, func, des):
+class Action:
+    def __init__(self, argc, func, des, usage=None, example=None):
         self.argc = argc
         self.func = func
         self.des = des
+        self.usage = usage or ""
+        self.example = example or ""
 
 
 def divScaleFunc(scope, args):
@@ -249,21 +255,76 @@ def divScaleFunc(scope, args):
 
     print(f"CH{chn}: {vdiv} V/div, {tdiv} s/div")
 
+    
+def couplingFunc(scope, args):
+    """
+    usage: coupling <channel> <AC|DC|GND>
+    e.g.   coupling 1 AC
+    """
+    chn, mode = args[0], args[1].upper()
+
+    if mode not in ("AC", "DC", "GND"):
+        print(f"invalid coupling mode: {mode} (expected AC, DC, or GND)")
+        return
+
+    scope.write(f":CHANnel{chn}:COUPling {mode}")
+    print(f"CH{chn}: coupling set to {mode}")
+
 
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
-    "clear": Action(0, clearFunc, "Clear console contents"),
-    "test": Action(1, testFunc, "A test action"),
-    "divscale": Action(3, divScaleFunc, "Sets the scale for a channel"),
-    "id": Action(0, idFunc, "Identify the device connected"),    
-    "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal"),
-    "measure": Action(0, measureFunc, "Provides a summary of the signal"),
-    "capture": Action(1, captureFunc, "Saves a png and csv and updates the program state"),
-    "trigger": Action(3, triggerFunc, "Configures a trigger on channel 1"),
-    "triggerinfo": Action(0, triggerInfoFunc, "Displays current trigger settings"),
-    "triggersettings": Action(0, triggerInfoFunc, "Displays current trigger settings"),
-    "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal"),
-    "describe": Action(0, llmDescribeCapture, "Enters a conversation with a LLM to allow the generated graph to be queried."),
+    "clear": Action(0, clearFunc, "Clear console contents",
+        usage="clear",
+        example="clear"),
+
+    "test": Action(1, testFunc, "A test action",
+        usage="test <message>",
+        example="test hello"),
+
+    "divscale": Action(3, divScaleFunc, "Sets the scale for a channel",
+        usage="divscale <channel> <volts/div> <time/div>",
+        example="divscale 1 0.5 0.001"),
+
+    "coupling": Action(2, couplingFunc, "Sets the coupling for a channel",
+        usage="coupling <channel> <AC|DC|GND>",
+        example="coupling 1 AC"),
+
+    "id": Action(0, idFunc, "Identify the device connected",
+        usage="id",
+        example="id"),
+
+    "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal",
+        usage="auto",
+        example="auto"),
+
+    "measure": Action(0, measureFunc, "Provides a summary of the signal",
+        usage="measure",
+        example="measure"),
+
+    "capture": Action(1, captureFunc, "Saves a png and csv and updates the program state",
+        usage="capture <channel>",
+        example="capture 1"),
+
+    "trigger": Action(3, triggerFunc, "Configures a trigger on channel 1",
+        usage="trigger <edge|falling> <pos> <level>",
+        example="trigger edge pos 2"),
+  
+  
+    "triggerinfo": Action(0, triggerInfoFunc, "Displays current trigger settings",
+        usage="triggerinfo",
+        example="triggerinfo"),
+  
+    "triggersettings": Action(0, triggerInfoFunc, "Displays current trigger settings",
+        usage="triggersettings",
+        example="triggersettings"),
+
+    "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal",
+        usage="playback",
+        example="playback"),
+
+    "describe": Action(0, llmDescribeCapture, "Enters a conversation with an LLM to query the generated graph",
+        usage="describe",
+        example="describe"),
 }
 
 
@@ -273,11 +334,16 @@ def getActionNames() -> []:
   
 def helpFunc(scope, args):
     print("""o-see-lloscope -- help
-    
-    An application for the Visually impared to allow full access to oscilloscope measuring
+
+    An application for the Visually impaired to allow full access to oscilloscope measuring
     """)
     for key, value in actionMap.items():
-        print (key + " : ", value.argc, " args.\n    " + value.des)
+        print(f"{key}: {value.des}")
+        if value.usage:
+            print(f"    usage: {value.usage}")
+        if value.example:
+            print(f"    e.g.   {value.example}")
+        print()
 
 #unique error action that is the default value for the map
 errorAction=Action(0, errorFunc, "(error)")
