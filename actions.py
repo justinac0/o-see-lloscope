@@ -5,10 +5,6 @@ from llm import llm
 from pathlib import Path
 
 
-# NOTE(everyone): actions interacting with channel data assume we
-# use channel 1 always.
-
-
 # Globals
 previous_voltage_capture: list = []
 
@@ -118,6 +114,7 @@ def playPrevCapture(scope, args):
 
     pitch.play_from_voltage(previous_voltage_capture)
 
+
 def llmDescribeCapture(scope, args):
     chat = llm()
 
@@ -149,6 +146,7 @@ class Action :
         self.func = func
         self.des = des
 
+
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
     "test": Action(1, testFunc, "A test action"),
@@ -161,6 +159,10 @@ actionMap = {
     "describe": Action(0, llmDescribeCapture, "Enters a conversation with a LLM to allow the generated graph to be queried."),
 }
 
+def getActionNames() -> []:
+    return actionMap.keys()
+
+  
 def helpFunc(scope, args):
     print("""o-see-lloscope -- help
     
@@ -169,6 +171,8 @@ def helpFunc(scope, args):
     for key, value in actionMap.items():
         print (key + " : ", value.argc, " args.\n    " + value.des)
 
+#unique error action that is the default value for the map
+errorAction=Action(0, errorFunc)
 
 #add to map after so helpFunc has accesss to the map
 actionMap["help"] = Action(0, helpFunc, "Provides help messages for each available command")
