@@ -87,6 +87,7 @@ def captureFunc(scope, args):
     plt.close()  # free memory, avoids figure buildup
     np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
 
+    
 triggerModes = {
     "edge": "EDGe",
     "pulse": "PULSe",
@@ -108,6 +109,7 @@ triggerModes = {
     "i2c": "IIC",
     "spi": "SPI",
 }
+
 
 triggerSlopes = {
     "pos": "POSitive",
@@ -139,6 +141,56 @@ def triggerFunc(scope, args):
     scope.write(f":TRIGger:MODE {mode}")
     scope.write(f":TRIGger:{mode}:SOURce CHANnel1; SLOPe {slope}; LEVel {level}")
 
+
+def triggerInfoFunc(scope, args):
+    """
+    Displays the current trigger settings (mode, source, slope, level, sweep, coupling, status).
+    """
+    try:
+        mode = scope.query(":TRIGger:MODE?").strip()
+    except Exception:
+        mode = "EDGe"
+
+    try:
+        sweep = scope.query(":TRIGger:SWEep?").strip()
+    except Exception:
+        sweep = "N/A"
+
+    try:
+        coupling = scope.query(":TRIGger:COUPling?").strip()
+    except Exception:
+        coupling = "N/A"
+
+    try:
+        status = scope.query(":TRIGger:STATus?").strip()
+    except Exception:
+        status = "N/A"
+
+    source = "N/A"
+    slope = "N/A"
+    level_str = "N/A"
+
+    for m in (mode, "EDGe"):
+        if source == "N/A":
+            try:
+                source = scope.query(f":TRIGger:{m}:SOURce?").strip()
+            except Exception:
+                pass
+        if slope == "N/A":
+            try:
+                slope = scope.query(f":TRIGger:{m}:SLOPe?").strip()
+            except Exception:
+                pass
+        if level_str == "N/A":
+            try:
+                lvl = float(scope.query(f":TRIGger:{m}:LEVel?").strip())
+                level_str = f"{lvl:.3f} V"
+            except Exception:
+                pass
+
+    print(f"Trigger Settings: Mode={mode}, Source={source}, Slope={slope}, Level={level_str}, Sweep={sweep}, Coupling={coupling}, Status={status}")
+
+    
 def playPrevCapture(scope, args):
     import audio.pitch as pitch
     """
@@ -203,6 +255,7 @@ def divScaleFunc(scope, args):
 
     print(f"CH{chn}: {vdiv} V/div, {tdiv} s/div")
 
+    
 def couplingFunc(scope, args):
     """
     usage: coupling <channel> <AC|DC|GND>
@@ -255,6 +308,15 @@ actionMap = {
     "trigger": Action(3, triggerFunc, "Configures a trigger on channel 1",
         usage="trigger <edge|falling> <pos> <level>",
         example="trigger edge pos 2"),
+  
+  
+    "triggerinfo": Action(0, triggerInfoFunc, "Displays current trigger settings",
+        usage="triggerinfo",
+        example="triggerinfo"),
+  
+    "triggersettings": Action(0, triggerInfoFunc, "Displays current trigger settings",
+        usage="triggersettings",
+        example="triggersettings"),
 
     "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal",
         usage="playback",
