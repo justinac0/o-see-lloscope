@@ -147,9 +147,23 @@ class Action :
         self.des = des
 
 
+def divScaleFunc(scope, args):
+    """
+    usage: divscale <channel> <volts/div> <time/div>
+    e.g.   divscale 1 0.5 0.001   -> 0.5 V/div, 1 ms/div
+    """
+    chn, vdiv, tdiv = args[0], args[1], args[2]
+
+    scope.write(f":CHANnel{chn}:SCALe {vdiv}")
+    scope.write(f":TIMebase:SCALe {tdiv}")
+
+    print(f"CH{chn}: {vdiv} V/div, {tdiv} s/div")
+
+
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
     "test": Action(1, testFunc, "A test action"),
+    "divscale": Action(3, divScaleFunc, "Sets the scale for a channel"),
     "id": Action(0, idFunc, "Identify the device connected"),    
     "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal"),
     "measure": Action(0, measureFunc, "Provides a summary of the signal"),
