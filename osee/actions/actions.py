@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from llm import llm
 from pathlib import Path
 import numpy as np
+import osee.actions.llm
 
 
 # Globals
@@ -83,9 +83,9 @@ def captureFunc(scope, args):
     plt.xlabel("Time (ms)")
     plt.ylabel("Voltage (V)")
     plt.title("Rigol DS1054Z capture")
-    plt.savefig("capture.png", dpi=150)
+    plt.savefig("tmp/capture.png", dpi=150)
     plt.close()  # free memory, avoids figure buildup
-    np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
+    np.savetxt("tmp/capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
 
     
 triggerModes = {
@@ -290,6 +290,27 @@ def runFunc(scope, args):
     scope.write(":RUN")
     print("Acquisition running.")
 
+ 
+def helpFunc(scope, args):
+    cmd = args[0]
+    action = actionMap.get(cmd)
+
+    if cmd == "all":
+        for key, value in actionMap.items():
+            print(f"{key}: {value.des}")
+            if value.usage:
+                print(f"    usage: {value.usage}")
+            if value.example:
+                print(f"    e.g.   {value.example}")
+            print()
+    else:
+        print(f"{cmd}: {action.des}")
+        if action.usage:
+            print(f"    usage: {action.usage}")
+        if action.example:
+            print(f"    e.g.   {action.example}")
+        print()
+
 
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
@@ -344,13 +365,7 @@ actionMap = {
     "run": Action(0, runFunc, "Starts waveform acquisition on the oscilloscope",
         usage="run",
         example="run"),
-
-  """
-    "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal",
-        usage="playback",
-        example="playback"),
-  """
-  
+ 
     "describe": Action(0, llmDescribeCapture, "Enters a conversation with an LLM to query the generated graph",
         usage="describe",
         example="describe"),
@@ -360,22 +375,9 @@ actionMap = {
 def getActionNames() -> []:
     return actionMap.keys()
 
-  
-def helpFunc(scope, args):
-    print("""o-see-lloscope -- help
-
-    An application for the Visually impaired to allow full access to oscilloscope measuring
-    """)
-    for key, value in actionMap.items():
-        print(f"{key}: {value.des}")
-        if value.usage:
-            print(f"    usage: {value.usage}")
-        if value.example:
-            print(f"    e.g.   {value.example}")
-        print()
-
+ 
 #unique error action that is the default value for the map
 errorAction=Action(0, errorFunc, "(error)")
 
 #add to map after so helpFunc has accesss to the map
-actionMap["help"] = Action(0, helpFunc, "Provides help messages for each available command")
+actionMap["help"] = Action(1, helpFunc, "Provides help messages for each available command")

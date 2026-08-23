@@ -4,7 +4,7 @@
 #
 # ref: https://testflowinc.com/blog/automate-rigol-oscilloscope-python-scpi-pyvisa-guide
 import pyvisa
-import repl
+import osee.repl.repl as rp
 
 
 if __name__ == "__main__":
@@ -16,6 +16,6 @@ if __name__ == "__main__":
         scope.timeout = 30000
         scope.chunk_size = 1024 * 1024
 
-        repl.startREPL(scope)
+        rp.startREPL(scope)
     else:
         print("no devices found, is your oscilloscope connected?")
