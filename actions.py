@@ -139,7 +139,11 @@ def triggerFunc(scope, args):
     level = args[2]
 
     scope.write(f":TRIGger:MODE {mode}")
-    scope.write(f":TRIGger:{mode}:SOURce CHANnel1; SLOPe {slope}; LEVel {level}")
+    scope.write(f":TRIGger:{mode}:SOURce CHANnel1")
+    scope.write(f":TRIGger:{mode}:SLOPe {slope}")
+    scope.write(f":TRIGger:{mode}:LEVel {level}")
+
+    print(f"Trigger updated: Mode={mode}, Source=CHANnel1, Slope={slope}, Level={level} V")
 
 
 def triggerInfoFunc(scope, args):
@@ -271,6 +275,22 @@ def couplingFunc(scope, args):
     print(f"CH{chn}: coupling set to {mode}")
 
 
+def stopFunc(scope, args):
+    """
+    Stops waveform acquisition (equivalent to pressing STOP on the oscilloscope).
+    """
+    scope.write(":STOP")
+    print("Acquisition stopped.")
+
+
+def runFunc(scope, args):
+    """
+    Starts waveform acquisition (equivalent to pressing RUN on the oscilloscope).
+    """
+    scope.write(":RUN")
+    print("Acquisition running.")
+
+
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
     "clear": Action(0, clearFunc, "Clear console contents",
@@ -307,8 +327,7 @@ actionMap = {
 
     "trigger": Action(3, triggerFunc, "Configures a trigger on channel 1",
         usage="trigger <edge|falling> <pos> <level>",
-        example="trigger edge pos 2"),
-  
+        example="trigger edge pos 2"),  
   
     "triggerinfo": Action(0, triggerInfoFunc, "Displays current trigger settings",
         usage="triggerinfo",
@@ -318,10 +337,20 @@ actionMap = {
         usage="triggersettings",
         example="triggersettings"),
 
+    "stop": Action(0, stopFunc, "Stops waveform acquisition on the oscilloscope",
+        usage="stop",
+        example="stop"),
+ 
+    "run": Action(0, runFunc, "Starts waveform acquisition on the oscilloscope",
+        usage="run",
+        example="run"),
+
+  """
     "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal",
         usage="playback",
         example="playback"),
-
+  """
+  
     "describe": Action(0, llmDescribeCapture, "Enters a conversation with an LLM to query the generated graph",
         usage="describe",
         example="describe"),
