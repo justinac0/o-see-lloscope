@@ -159,11 +159,26 @@ def divScaleFunc(scope, args):
 
     print(f"CH{chn}: {vdiv} V/div, {tdiv} s/div")
 
+def couplingFunc(scope, args):
+    """
+    usage: coupling <channel> <AC|DC|GND>
+    e.g.   coupling 1 AC
+    """
+    chn, mode = args[0], args[1].upper()
+
+    if mode not in ("AC", "DC", "GND"):
+        print(f"invalid coupling mode: {mode} (expected AC, DC, or GND)")
+        return
+
+    scope.write(f":CHANnel{chn}:COUPling {mode}")
+    print(f"CH{chn}: coupling set to {mode}")
+
 
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
     "test": Action(1, testFunc, "A test action"),
     "divscale": Action(3, divScaleFunc, "Sets the scale for a channel"),
+    "coupling": Action(2, couplingFunc, "Sets the coupling for a channel"),
     "id": Action(0, idFunc, "Identify the device connected"),    
     "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal"),
     "measure": Action(0, measureFunc, "Provides a summary of the signal"),
