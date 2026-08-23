@@ -1,14 +1,14 @@
 import os
 from pathlib import Path
 import numpy as np
-import osee.actions.llm
+import osee.actions.llm as llm
 import matplotlib.pyplot as plt
 import threading
 
-try:
-    from classify_action import classifyFunc
-except ImportError:
-    classifyFunc = None  # classifier not set up yet -- registered conditionally below
+#try:
+#    from classify_action import classifyFunc
+#except ImportError:
+#    classifyFunc = None  # classifier not set up yet -- registered conditionally below
 
 
 # ---------------------------------------------------------------------------
@@ -266,7 +266,7 @@ def llmDescribeCapture(scope, args):
     usage: describe
     Enters a conversation with an LLM about the last captured graph.
     """
-    chat = llm()
+    chat = llm.llm()
 
     if not Path("capture.png").is_file():
         print("capture does not exist! Please capture waveform first.")
