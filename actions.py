@@ -254,6 +254,22 @@ def divScaleFunc(scope, args):
     print(f"CH{chn}: {vdiv} V/div, {tdiv} s/div")
 
 
+def stopFunc(scope, args):
+    """
+    Stops waveform acquisition (equivalent to pressing STOP on the oscilloscope).
+    """
+    scope.write(":STOP")
+    print("Acquisition stopped.")
+
+
+def runFunc(scope, args):
+    """
+    Starts waveform acquisition (equivalent to pressing RUN on the oscilloscope).
+    """
+    scope.write(":RUN")
+    print("Acquisition running.")
+
+
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
     "clear": Action(0, clearFunc, "Clear console contents"),
@@ -263,6 +279,8 @@ actionMap = {
     "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal"),
     "measure": Action(0, measureFunc, "Provides a summary of the signal"),
     "capture": Action(1, captureFunc, "Saves a png and csv and updates the program state"),
+    "stop": Action(0, stopFunc, "Stops waveform acquisition on the oscilloscope"),
+    "run": Action(0, runFunc, "Starts waveform acquisition on the oscilloscope"),
     "trigger": Action(3, triggerFunc, "Configures a trigger on channel 1"),
     "triggerinfo": Action(0, triggerInfoFunc, "Displays current trigger settings"),
     "triggersettings": Action(0, triggerInfoFunc, "Displays current trigger settings"),
