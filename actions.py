@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as npactio
 import matplotlib.pyplot as plt
 import os
 from llm import llm
@@ -139,7 +139,11 @@ def llmDescribeCapture(scope, args):
 def idFunc(scope, args):
     print(scope.query("*IDN?"))
 
+
+def clearFunc(scope, args):
+    os.system("clear")
         
+
 class Action :
     def __init__(self, argc, func, des):
         self.argc = argc
@@ -149,6 +153,7 @@ class Action :
 
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
+    "clear": Action(0, clearFunc, "Clear console contents"),
     "test": Action(1, testFunc, "A test action"),
     "id": Action(0, idFunc, "Identify the device connected"),    
     "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal"),
@@ -158,6 +163,7 @@ actionMap = {
     "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal"),
     "describe": Action(0, llmDescribeCapture, "Enters a conversation with a LLM to allow the generated graph to be queried."),
 }
+
 
 def getActionNames() -> []:
     return actionMap.keys()
@@ -172,7 +178,7 @@ def helpFunc(scope, args):
         print (key + " : ", value.argc, " args.\n    " + value.des)
 
 #unique error action that is the default value for the map
-errorAction=Action(0, errorFunc)
+errorAction=Action(0, errorFunc, "(error)")
 
 #add to map after so helpFunc has accesss to the map
 actionMap["help"] = Action(0, helpFunc, "Provides help messages for each available command")
