@@ -1,4 +1,4 @@
-import numpy as npactio
+import numpy as np
 import matplotlib.pyplot as plt
 import os
 from llm import llm
@@ -87,21 +87,58 @@ def captureFunc(scope, args):
     plt.close()  # free memory, avoids figure buildup
     np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
 
+triggerModes = {
+    "edge": "EDGe",
+    "pulse": "PULSe",
+    "runt": "RUNT",
+    "wind": "WIND",
+    "window": "WIND",
+    "windows": "WIND",
+    "nedg": "NEDG",
+    "nedge": "NEDG",
+    "slope": "SLOPe",
+    "video": "VIDeo",
+    "pattern": "PATTern",
+    "delay": "DELay",
+    "timeout": "TIMeout",
+    "duration": "DURation",
+    "shold": "SHOLd",
+    "rs232": "RS232",
+    "iic": "IIC",
+    "i2c": "IIC",
+    "spi": "SPI",
+}
+
+triggerSlopes = {
+    "pos": "POSitive",
+    "positive": "POSitive",
+    "rising": "POSitive",
+    "rise": "POSitive",
+    "+": "POSitive",
+    "neg": "NEGative",
+    "negative": "NEGative",
+    "falling": "NEGative",
+    "fall": "NEGative",
+    "-": "NEGative",
+    "rfall": "RFALl",
+    "rfal": "RFALl",
+    "both": "RFALl",
+}
+
 
 def triggerFunc(scope, args):
     """
     trigger source on rising or falling etc...
+    usage: trigger <mode> <slope> <level>
+    e.g.   trigger edge pos 1.5
     """
-    #•  Select Trigger Type:• :TRIGger:MODE {EDGe|PULSe|VIDeo|PATTern|SLOPe|ALTernate}
-    match args[0]:
-        case "edge" : mode = "EDGe"
-        case "falling": mode = "FALing"
-    match args[1]:
-        case "pos": slope = "POSitive"
-    level = int(args[2]) 
-    scope.write(":TRIGger:" + mode + ":SOURce CHANnel1; SLOPe POSitive; LEVel " + level)
+    mode = triggerModes.get(args[0].lower(), args[0].upper())
+    slope = triggerSlopes.get(args[1].lower(), args[1].upper())
+    level = args[2]
 
-    
+    scope.write(f":TRIGger:MODE {mode}")
+    scope.write(f":TRIGger:{mode}:SOURce CHANnel1; SLOPe {slope}; LEVel {level}")
+
 def playPrevCapture(scope, args):
     import audio.pitch as pitch
     """
