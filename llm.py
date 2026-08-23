@@ -1,23 +1,50 @@
 from google import genai
 import os
+import threading
 from dotenv import load_dotenv
 load_dotenv()
 import base64
+import time
 
 # Globals
 with open("system.md", "r", encoding="utf-8") as file:
     SYSTEM_INSTRUCTION = file.read()
 API_KEY = os.getenv("API_KEY")
-LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.6-flash")
+LLM_MODEL = os.getenv("LLM_MODEL", "gemini-3.1-flash-lite")
 
 # For each new chat create a new llm object
 class llm():
     def __init__(self):
         self.client = genai.Client(api_key=API_KEY)
         self.interaction = None
+        self.status_completed = None
+
+    def loading(self, max_counter=7):
+        start = time.time()
+        counter = 0 
+        step = 1
+
+        while not self.status_completed:
+            print(
+                f"Thinking {'.'*counter + ' '*(max_counter-counter)}\t\t{round(time.time() - start, 3)}s", 
+                end="\r", 
+                flush=True
+            )
+            time.sleep(0.1)
+
+            if counter >= max_counter:
+                step = -1    
+            elif counter <= 0:
+                step = 1
+            counter += step
+
+        self.status_completed = False
+
 
     def query(self, prompt: str, image_bytes=None, details=None):
         global LLM_MODEL, SYSTEM_INSTRUCTION
+
+        self.status_completed = False
 
         inputs = [{"type": "text", "text": prompt}]
 
@@ -40,22 +67,7 @@ class llm():
             kwargs["previous_interaction_id"] = self.interaction.id
 
         self.interaction = self.client.interactions.create(**kwargs)
-        print(self.interaction.output_text)
-        return
+        self.status_completed = True
 
-if __name__ == "__main__":
-    chat = llm()
+        return self.interaction.output_text
 
-    print("What would you like described? Type q or ctrl+ c to exit.")
-    prompt = input("Chat: ")
-
-    path = r"""C:\Users\liaml\Downloads\square_waveform.png"""
-    with open(path, "rb") as image_file:
-        image_bytes = image_file.read()
-
-    chat.query(prompt=prompt, image_bytes=image_bytes)
-
-    while True:
-        prompt = input("\nChat: ")
-        if (prompt == 'q') or (prompt == 'Q'): break
-        chat.query(prompt=prompt)

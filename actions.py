@@ -4,6 +4,7 @@ import os
 from llm import llm
 from pathlib import Path
 import numpy as np
+import threading
 
 
 # Globals
@@ -213,21 +214,33 @@ def llmDescribeCapture(scope, args):
     chat = llm()
 
     if not Path("capture.png").is_file():
-        print("Capture does not exist! Please capture waveform first.")
+        print("capture does not exist! Please capture waveform first.")
         return
-
-    print("What would you like described? Type q or ctrl+ c to exit.")
-    prompt = input("Chat: ")
 
     with open("capture.png", "rb") as image_file:
         image_bytes = image_file.read()
 
-    chat.query(prompt=prompt, image_bytes=image_bytes)
+    print("what would you like described? Type 'q' or 'exit' to exit.")
+    print("\n------------------\n")
+    prompt = input("Chat: ")
 
-    while True:
-        prompt = input("\nChat: ")
-        if (prompt == 'q') or (prompt == 'Q'): break
-        chat.query(prompt=prompt)
+    kwargs = {
+        "prompt": prompt,
+        "image_bytes": image_bytes,
+    }
+
+    while True:        
+        if (prompt.upper() == 'Q') or (prompt.upper() == 'EXIT'): break
+
+        t = threading.Thread(target=chat.loading)
+        t.start()
+        print(chat.query(**kwargs))
+        t.join()
+
+        print("\n------------------\n")
+
+        prompt = input("Chat: ")
+        kwargs = {"prompt": prompt}
 
 
 def idFunc(scope, args):
@@ -345,12 +358,6 @@ actionMap = {
         usage="run",
         example="run"),
 
-  """
-    "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal",
-        usage="playback",
-        example="playback"),
-  """
-  
     "describe": Action(0, llmDescribeCapture, "Enters a conversation with an LLM to query the generated graph",
         usage="describe",
         example="describe"),
