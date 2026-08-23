@@ -1,8 +1,9 @@
-import numpy as np
+import numpy as npactio
 import matplotlib.pyplot as plt
 import os
 from llm import llm
 from pathlib import Path
+import numpy as np
 
 
 # Globals
@@ -139,7 +140,11 @@ def llmDescribeCapture(scope, args):
 def idFunc(scope, args):
     print(scope.query("*IDN?"))
 
-        
+
+def clearFunc(scope, args):
+    os.system("clear")
+    
+
 class Action:
     def __init__(self, argc, func, des, usage=None, example=None):
         self.argc = argc
@@ -147,6 +152,7 @@ class Action:
         self.des = des
         self.usage = usage or ""
         self.example = example or ""
+
 
 def divScaleFunc(scope, args):
     """
@@ -222,6 +228,7 @@ actionMap = {
         example="describe"),
 }
 
+
 def getActionNames() -> []:
     return actionMap.keys()
 
@@ -240,7 +247,7 @@ def helpFunc(scope, args):
         print()
 
 #unique error action that is the default value for the map
-errorAction=Action(0, errorFunc)
+errorAction=Action(0, errorFunc, "(error)")
 
 #add to map after so helpFunc has accesss to the map
 actionMap["help"] = Action(0, helpFunc, "Provides help messages for each available command")
