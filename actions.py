@@ -136,7 +136,11 @@ def triggerFunc(scope, args):
     level = args[2]
 
     scope.write(f":TRIGger:MODE {mode}")
-    scope.write(f":TRIGger:{mode}:SOURce CHANnel1; SLOPe {slope}; LEVel {level}")
+    scope.write(f":TRIGger:{mode}:SOURce CHANnel1")
+    scope.write(f":TRIGger:{mode}:SLOPe {slope}")
+    scope.write(f":TRIGger:{mode}:LEVel {level}")
+
+    print(f"Trigger updated: Mode={mode}, Source=CHANnel1, Slope={slope}, Level={level} V")
 
 
 def triggerInfoFunc(scope, args):
