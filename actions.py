@@ -14,6 +14,7 @@ previous_voltage_capture: list = []
 
 # Action Functions
 
+
 def testFunc(scope, args):
     print("test: ", args[0])
 
@@ -29,6 +30,7 @@ def autoFunc(scope, argse):
 def measure(scope, item, channel="CHANnel1"):
     return float(scope.query(f":MEASure:ITEM? {item},{channel}"))
 
+  
 def measureFunc(scope, args):
     scope.write(":AUToscale")
     vpp  = measure(scope, "VPP")
@@ -41,8 +43,17 @@ def measureFunc(scope, args):
 def captureFunc(scope, args):
     global previous_voltage_capture
 
+    chn = args[0]
+    
+    chn_col = {
+        "1": "y",
+        "2": "a",
+        "3": "m",
+        "4": "b",
+    }
+
     # getting some raw binary data from device
-    scope.write(":WAVeform:SOURce CHANnel1")
+    scope.write(f":WAVeform:SOURce CHANnel{chn}")
     scope.write(":WAVeform:MODE NORMal")
     scope.write(":WAVeform:FORMat BYTE")
 
@@ -70,12 +81,13 @@ def captureFunc(scope, args):
 
     previous_voltage_capture = volts
 
-    # plotting some data
-    plt.plot(time_s * 1e3, volts)
+    plt.clf()  # clear the current figure
+    plt.plot(time_s * 1e3, volts, c=chn_col[chn])
     plt.xlabel("Time (ms)")
     plt.ylabel("Voltage (V)")
     plt.title("Rigol DS1054Z capture")
     plt.savefig("capture.png", dpi=150)
+    plt.close()  # free memory, avoids figure buildup
     np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
 
 
@@ -92,6 +104,7 @@ def triggerFunc(scope, args):
     level = int(args[2]) 
     scope.write(":TRIGger:" + mode + ":SOURce CHANnel1; SLOPe POSitive; LEVel " + level)
 
+    
 def playPrevCapture(scope, args):
     import audio.pitch as pitch
     """
@@ -126,6 +139,10 @@ def llmDescribeCapture(scope, args):
         chat.query(prompt=prompt)
 
 
+def idFunc(scope, args):
+    print(scope.query("*IDN?"))
+
+        
 class Action :
     def __init__(self, argc, func, des):
         self.argc = argc
@@ -135,10 +152,10 @@ class Action :
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
     "test": Action(1, testFunc, "A test action"),
-    
+    "id": Action(0, idFunc, "Identify the device connected"),    
     "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal"),
     "measure": Action(0, measureFunc, "Provides a summary of the signal"),
-    "capture": Action(0, captureFunc, "Saves a png and csv and updates the program state"),
+    "capture": Action(1, captureFunc, "Saves a png and csv and updates the program state"),
     "trigger": Action(3, triggerFunc, "Configures a trigger on channel 1"),
     "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal"),
     "describe": Action(0, llmDescribeCapture, "Enters a conversation with a LLM to allow the generated graph to be queried."),
