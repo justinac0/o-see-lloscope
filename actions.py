@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 from llm import llm
 from pathlib import Path
+import numpy as np
 
 
 # Globals
