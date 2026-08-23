@@ -11,7 +11,7 @@ def startREPL(scope):
 
     while True:
         try:
-            print("> ")
+            print("> ", end = "")
             #read
             textInput = input().split() 
             cmd= textInput[0]
@@ -22,7 +22,7 @@ def startREPL(scope):
                 break
 
             #lookup and check argc
-            action = actions.actionMap.get(cmd, actions.errorAction) #provide default fallback if cmd not found
+            action = actions.actionMap[cmd]
 
             if action.argc != len(args):
                 print(cmd, " requires arg length of ", action.argc)
