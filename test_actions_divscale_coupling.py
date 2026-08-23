@@ -1,5 +1,4 @@
-from actions import divScaleFunc, couplingFunc
-
+from actions import autoFunc, measureFunc, captureFunc
 
 class FakeScope:
     """Minimal stand-in for a scope: just records what was written."""
@@ -40,3 +39,16 @@ def test_coupling_rejects_invalid_mode(capsys):
 
     assert scope.written == []
     assert "invalid coupling mode" in capsys.readouterr().out
+
+def test_measure_sends_autoscale_and_reads_values(capsys):
+    scope = FakeScope(answers={
+        ":MEASure:ITEM? VPP,CHANnel1": "3.3",
+        ":MEASure:ITEM? FREQuency,CHANnel1": "1000",
+        ":MEASure:ITEM? VAVG,CHANnel1": "1.65",
+    })
+    measureFunc(scope, [])
+    assert ":AUToscale" in scope.written
+    out = capsys.readouterr().out
+    assert "Vpp = 3.300 V" in out
+    assert "f = 1000.0 Hz" in out
+    assert "Vavg = 1.650 V" in out
