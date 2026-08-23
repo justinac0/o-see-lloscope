@@ -153,6 +153,9 @@ actionMap = {
     "describe": Action(0, llmDescribeCapture),
 }
 
+def getActionNames() -> []:
+    return actionMap.keys()
+
 #unique error action that is the default value for the map
 errorAction=Action(0, errorFunc)
 
