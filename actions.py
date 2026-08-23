@@ -2,7 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from llm import llm
+import numpy as np
 
 try:
     from classify_action import classifyFunc
@@ -140,37 +140,114 @@ def captureFunc(scope, args):
     np.savetxt("capture.csv", np.column_stack([time_s, volts]),
                delimiter=",", header="time_s,volts")
 
+    
+triggerModes = {
+    "edge": "EDGe",
+    "pulse": "PULSe",
+    "runt": "RUNT",
+    "wind": "WIND",
+    "window": "WIND",
+    "windows": "WIND",
+    "nedg": "NEDG",
+    "nedge": "NEDG",
+    "slope": "SLOPe",
+    "video": "VIDeo",
+    "pattern": "PATTern",
+    "delay": "DELay",
+    "timeout": "TIMeout",
+    "duration": "DURation",
+    "shold": "SHOLd",
+    "rs232": "RS232",
+    "iic": "IIC",
+    "i2c": "IIC",
+    "spi": "SPI",
+}
+
+
+triggerSlopes = {
+    "pos": "POSitive",
+    "positive": "POSitive",
+    "rising": "POSitive",
+    "rise": "POSitive",
+    "+": "POSitive",
+    "neg": "NEGative",
+    "negative": "NEGative",
+    "falling": "NEGative",
+    "fall": "NEGative",
+    "-": "NEGative",
+    "rfall": "RFALl",
+    "rfal": "RFALl",
+    "both": "RFALl",
+}
+
 
 def triggerFunc(scope, args):
     """
-    usage: trigger <edge|falling> <pos|neg> <level>
-    e.g.   trigger edge pos 2
+    trigger source on rising or falling etc...
+    usage: trigger <mode> <slope> <level>
+    e.g.   trigger edge pos 1.5
     """
-    edge_type, slope_arg, level_arg = args[0], args[1], args[2]
+    mode = triggerModes.get(args[0].lower(), args[0].upper())
+    slope = triggerSlopes.get(args[1].lower(), args[1].upper())
+    level = args[2]
 
-    mode_map = {"edge": "EDGe", "falling": "FALLing"}
-    slope_map = {"pos": "POSitive", "neg": "NEGative"}
+    scope.write(f":TRIGger:MODE {mode}")
+    scope.write(f":TRIGger:{mode}:SOURce CHANnel1")
+    scope.write(f":TRIGger:{mode}:SLOPe {slope}")
+    scope.write(f":TRIGger:{mode}:LEVel {level}")
 
-    mode = mode_map.get(edge_type)
-    slope = slope_map.get(slope_arg)
+    print(f"Trigger updated: Mode={mode}, Source=CHANnel1, Slope={slope}, Level={level} V")
 
-    if mode is None:
-        print(f"invalid trigger type: {edge_type} (expected edge or falling)")
-        return
-    if slope is None:
-        print(f"invalid slope: {slope_arg} (expected pos or neg)")
-        return
+
+def triggerInfoFunc(scope, args):
+    """
+    Displays the current trigger settings (mode, source, slope, level, sweep, coupling, status).
+    """
+    try:
+        mode = scope.query(":TRIGger:MODE?").strip()
+    except Exception:
+        mode = "EDGe"
 
     try:
-        level = float(level_arg)
-    except ValueError:
-        print(f"invalid level: {level_arg} (expected a number)")
-        return
+        sweep = scope.query(":TRIGger:SWEep?").strip()
+    except Exception:
+        sweep = "N/A"
 
-    scope.write(f":TRIGger:{mode}:SOURce CHANnel1; SLOPe {slope}; LEVel {level}")
-    print(f"trigger set: {mode}, {slope}, level={level}")
+    try:
+        coupling = scope.query(":TRIGger:COUPling?").strip()
+    except Exception:
+        coupling = "N/A"
 
+    try:
+        status = scope.query(":TRIGger:STATus?").strip()
+    except Exception:
+        status = "N/A"
 
+    source = "N/A"
+    slope = "N/A"
+    level_str = "N/A"
+
+    for m in (mode, "EDGe"):
+        if source == "N/A":
+            try:
+                source = scope.query(f":TRIGger:{m}:SOURce?").strip()
+            except Exception:
+                pass
+        if slope == "N/A":
+            try:
+                slope = scope.query(f":TRIGger:{m}:SLOPe?").strip()
+            except Exception:
+                pass
+        if level_str == "N/A":
+            try:
+                lvl = float(scope.query(f":TRIGger:{m}:LEVel?").strip())
+                level_str = f"{lvl:.3f} V"
+            except Exception:
+                pass
+
+    print(f"Trigger Settings: Mode={mode}, Source={source}, Slope={slope}, Level={level_str}, Sweep={sweep}, Coupling={coupling}, Status={status}")
+
+    
 def playPrevCapture(scope, args):
     """
     usage: playback
@@ -214,53 +291,130 @@ def llmDescribeCapture(scope, args):
 # Action registry
 # ---------------------------------------------------------------------------
 
+
+def clearFunc(scope, args):
+    os.system("clear")
+    
+
 class Action:
-    def __init__(self, argc, func, des, usage="", example=""):
+    def __init__(self, argc, func, des, usage=None, example=None):
         self.argc = argc
         self.func = func
         self.des = des
-        self.usage = usage
-        self.example = example
+        self.usage = usage or ""
+        self.example = example or ""
+
+
+def divScaleFunc(scope, args):
+    """
+    usage: divscale <channel> <volts/div> <time/div>
+    e.g.   divscale 1 0.5 0.001   -> 0.5 V/div, 1 ms/div
+    """
+    chn, vdiv, tdiv = args[0], args[1], args[2]
+
+    scope.write(f":CHANnel{chn}:SCALe {vdiv}")
+    scope.write(f":TIMebase:SCALe {tdiv}")
+
+    print(f"CH{chn}: {vdiv} V/div, {tdiv} s/div")
+
+    
+def couplingFunc(scope, args):
+    """
+    usage: coupling <channel> <AC|DC|GND>
+    e.g.   coupling 1 AC
+    """
+    chn, mode = args[0], args[1].upper()
+
+    if mode not in ("AC", "DC", "GND"):
+        print(f"invalid coupling mode: {mode} (expected AC, DC, or GND)")
+        return
+
+    scope.write(f":CHANnel{chn}:COUPling {mode}")
+    print(f"CH{chn}: coupling set to {mode}")
+
+
+def stopFunc(scope, args):
+    """
+    Stops waveform acquisition (equivalent to pressing STOP on the oscilloscope).
+    """
+    scope.write(":STOP")
+    print("Acquisition stopped.")
+
+
+def runFunc(scope, args):
+    """
+    Starts waveform acquisition (equivalent to pressing RUN on the oscilloscope).
+    """
+    scope.write(":RUN")
+    print("Acquisition running.")
 
 
 actionMap = {
     "clear": Action(0, clearFunc, "Clear console contents",
-                    usage="clear", example="clear"),
+        usage="clear",
+        example="clear"),
+
     "test": Action(1, testFunc, "A test action",
-                    usage="test <message>", example="test hello"),
-    "id": Action(0, idFunc, "Identify the device connected",
-                 usage="id", example="id"),
-    "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal",
-                   usage="auto", example="auto"),
-    "measure": Action(0, measureFunc, "Provides a summary of the signal",
-                       usage="measure", example="measure"),
-    "divscale": Action(3, divScaleFunc, "Sets the volts/div and time/div scale for a channel",
-                        usage="divscale <channel> <volts/div> <time/div>",
-                        example="divscale 1 0.5 0.001"),
+        usage="test <message>",
+        example="test hello"),
+
+    "divscale": Action(3, divScaleFunc, "Sets the scale for a channel",
+        usage="divscale <channel> <volts/div> <time/div>",
+        example="divscale 1 0.5 0.001"),
+
     "coupling": Action(2, couplingFunc, "Sets the coupling for a channel",
-                        usage="coupling <channel> <AC|DC|GND>",
-                        example="coupling 1 AC"),
+        usage="coupling <channel> <AC|DC|GND>",
+        example="coupling 1 AC"),
+
+    "id": Action(0, idFunc, "Identify the device connected",
+        usage="id",
+        example="id"),
+
+    "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal",
+        usage="auto",
+        example="auto"),
+
+    "measure": Action(0, measureFunc, "Provides a summary of the signal",
+        usage="measure",
+        example="measure"),
+
     "capture": Action(1, captureFunc, "Saves a png and csv and updates the program state",
-                       usage="capture <channel>", example="capture 1"),
+        usage="capture <channel>",
+        example="capture 1"),
+
     "trigger": Action(3, triggerFunc, "Configures a trigger on channel 1",
-                       usage="trigger <edge|falling> <pos|neg> <level>",
-                       example="trigger edge pos 2"),
+        usage="trigger <edge|falling> <pos> <level>",
+        example="trigger edge pos 2"),  
+  
+    "triggerinfo": Action(0, triggerInfoFunc, "Displays current trigger settings",
+        usage="triggerinfo",
+        example="triggerinfo"),
+  
+    "triggersettings": Action(0, triggerInfoFunc, "Displays current trigger settings",
+        usage="triggersettings",
+        example="triggersettings"),
+
+    "stop": Action(0, stopFunc, "Stops waveform acquisition on the oscilloscope",
+        usage="stop",
+        example="stop"),
+ 
+    "run": Action(0, runFunc, "Starts waveform acquisition on the oscilloscope",
+        usage="run",
+        example="run"),
+
+  """
     "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal",
-                        usage="playback", example="playback"),
-    "describe": Action(0, llmDescribeCapture,
-                        "Enters a conversation with an LLM to query the generated graph",
-                        usage="describe", example="describe"),
+        usage="playback",
+        example="playback"),
+  """
+  
+    "describe": Action(0, llmDescribeCapture, "Enters a conversation with an LLM to query the generated graph",
+        usage="describe",
+        example="describe"),
 }
 
-if classifyFunc is not None:
-    actionMap["classify"] = Action(
-        0, classifyFunc,
-        "Classifies the last capture as sine/square/triangle/noise",
-        usage="classify", example="classify",
-    )
 
-
-def getActionNames():
+def getActionNames() -> []:
     return actionMap.keys()
 
 
@@ -277,9 +431,8 @@ def helpFunc(scope, args):
             print(f"    e.g.   {value.example}")
         print()
 
+#unique error action that is the default value for the map
+errorAction=Action(0, errorFunc, "(error)")
 
+#add to map after so helpFunc has accesss to the map
 actionMap["help"] = Action(0, helpFunc, "Provides help messages for each available command")
-
-# unique error action, default value for the map -- must come after
-# actionMap is fully populated in case future actions reference it
-errorAction = Action(0, errorFunc, "(error)")
