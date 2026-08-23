@@ -136,9 +136,9 @@ def captureFunc(scope, args):
     plt.xlabel("Time (ms)")
     plt.ylabel("Voltage (V)")
     plt.title("Rigol DS1054Z capture")
-    plt.savefig("tmp/capture.png", dpi=150)
+    plt.savefig("capture.png", dpi=150)
     plt.close()  # free memory, avoids figure buildup
-    np.savetxt("tmp/capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
+    np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
     
 triggerModes = {
     "edge": "EDGe",
