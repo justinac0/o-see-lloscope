@@ -1,77 +1,129 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-from llm import llm
 from pathlib import Path
 import numpy as np
 import threading
 
+try:
+    from classify_action import classifyFunc
+except ImportError:
+    classifyFunc = None  # classifier not set up yet -- registered conditionally below
 
+
+# ---------------------------------------------------------------------------
 # Globals
+# ---------------------------------------------------------------------------
+
 previous_voltage_capture: list = []
 
-# Action Functions
+VALID_CHANNELS = {"1", "2", "3", "4"}
+CHANNEL_COLORS = {"1": "y", "2": "a", "3": "m", "4": "b"}
 
+
+# ---------------------------------------------------------------------------
+# Action functions
+# ---------------------------------------------------------------------------
 
 def testFunc(scope, args):
     print("test: ", args[0])
 
 
-def errorFunc(args):
-    print ("cmd not found")
+def errorFunc(scope, args):
+    print("cmd not found")
 
 
-def autoFunc(scope, argse):
+def clearFunc(scope, args):
+    os.system("clear")
+
+
+def idFunc(scope, args):
+    print(scope.query("*IDN?"))
+
+
+def autoFunc(scope, args):
     scope.write(":AUToscale")
 
 
 def measure(scope, item, channel="CHANnel1"):
     return float(scope.query(f":MEASure:ITEM? {item},{channel}"))
 
-  
+
 def measureFunc(scope, args):
     scope.write(":AUToscale")
-    vpp  = measure(scope, "VPP")
+    vpp = measure(scope, "VPP")
     freq = measure(scope, "FREQuency")
     vavg = measure(scope, "VAVG")
-
     print(f"Vpp = {vpp:.3f} V, f = {freq:.1f} Hz, Vavg = {vavg:.3f} V")
 
 
+def divScaleFunc(scope, args):
+    """
+    usage: divscale <channel> <volts/div> <time/div>
+    e.g.   divscale 1 0.5 0.001   -> 0.5 V/div, 1 ms/div
+    """
+    chn, vdiv, tdiv = args[0], args[1], args[2]
+
+    if chn not in VALID_CHANNELS:
+        print(f"invalid channel: {chn} (expected 1-4)")
+        return
+
+    scope.write(f":CHANnel{chn}:SCALe {vdiv}")
+    scope.write(f":TIMebase:SCALe {tdiv}")
+    print(f"CH{chn}: {vdiv} V/div, {tdiv} s/div")
+
+
+def couplingFunc(scope, args):
+    """
+    usage: coupling <channel> <AC|DC|GND>
+    e.g.   coupling 1 AC
+    """
+    chn, mode = args[0], args[1].upper()
+
+    if chn not in VALID_CHANNELS:
+        print(f"invalid channel: {chn} (expected 1-4)")
+        return
+    if mode not in ("AC", "DC", "GND"):
+        print(f"invalid coupling mode: {mode} (expected AC, DC, or GND)")
+        return
+
+    scope.write(f":CHANnel{chn}:COUPling {mode}")
+    print(f"CH{chn}: coupling set to {mode}")
+
+
 def captureFunc(scope, args):
+    """
+    usage: capture <channel>
+    e.g.   capture 1
+    """
     global previous_voltage_capture
 
     chn = args[0]
-    
-    chn_col = {
-        "1": "y",
-        "2": "a",
-        "3": "m",
-        "4": "b",
-    }
+    if chn not in VALID_CHANNELS:
+        print(f"invalid channel: {chn} (expected 1-4)")
+        return
 
-    # getting some raw binary data from device
+    # getting raw binary data from device
     scope.write(f":WAVeform:SOURce CHANnel{chn}")
     scope.write(":WAVeform:MODE NORMal")
     scope.write(":WAVeform:FORMat BYTE")
 
     # scaling factors
-    xinc  = float(scope.query(":WAVeform:XINCrement?"))
-    yinc  = float(scope.query(":WAVeform:YINCrement?"))
+    xinc = float(scope.query(":WAVeform:XINCrement?"))
+    yinc = float(scope.query(":WAVeform:YINCrement?"))
     yorig = float(scope.query(":WAVeform:YORigin?"))
-    yref  = float(scope.query(":WAVeform:YREFerence?"))
+    yref = float(scope.query(":WAVeform:YREFerence?"))
 
     scope.write(":WAVeform:DATA?")
-    # for some reason the code from the ref times out here
-    # so we just have to manually pass the header our selfs
+    # for some reason the code from the ref times out here, so we
+    # manually parse the SCPI block-data header ourselves
     #
     # ref: https://helpfiles.keysight.com/csg/n5106a/commands_for_downloading_waveform_data.htm
-    #
-    header = scope.read_bytes(2) # '#' + digit count
+    header = scope.read_bytes(2)          # '#' + digit count
     n_digits = int(header[1:2])
-    len_str = scope.read_bytes(n_digits) # ASCII length of payload
+    len_str = scope.read_bytes(n_digits)  # ASCII length of payload
     n_bytes = int(len_str)
-    payload = scope.read_bytes(n_bytes + 1) # +1 for trailing newline
+    payload = scope.read_bytes(n_bytes + 1)  # +1 for trailing newline
     raw = np.frombuffer(payload[:-1], dtype=np.uint8)
 
     volts = (raw - yorig - yref) * yinc
@@ -79,14 +131,15 @@ def captureFunc(scope, args):
 
     previous_voltage_capture = volts
 
-    plt.clf()  # clear the current figure
-    plt.plot(time_s * 1e3, volts, c=chn_col[chn])
+    plt.clf()
+    plt.plot(time_s * 1e3, volts, c=CHANNEL_COLORS[chn])
     plt.xlabel("Time (ms)")
     plt.ylabel("Voltage (V)")
     plt.title("Rigol DS1054Z capture")
     plt.savefig("capture.png", dpi=150)
-    plt.close()  # free memory, avoids figure buildup
-    np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
+    plt.close()
+    np.savetxt("capture.csv", np.column_stack([time_s, volts]),
+               delimiter=",", header="time_s,volts")
 
     
 triggerModes = {
@@ -197,20 +250,24 @@ def triggerInfoFunc(scope, args):
 
     
 def playPrevCapture(scope, args):
+    """
+    usage: playback
+    Plays the previous capture from channel 1 as a pitch.
+    """
     import audio.pitch as pitch
-    """
-    play the previous capture from channel 1 as a pitch
-    """
 
     global previous_voltage_capture
-
     if len(previous_voltage_capture) == 0:
-        raise Exception("error previous capture is empty") 
+        raise Exception("error: previous capture is empty")
 
     pitch.play_from_voltage(previous_voltage_capture)
 
 
 def llmDescribeCapture(scope, args):
+    """
+    usage: describe
+    Enters a conversation with an LLM about the last captured graph.
+    """
     chat = llm()
 
     if not Path("capture.png").is_file():
@@ -243,8 +300,9 @@ def llmDescribeCapture(scope, args):
         kwargs = {"prompt": prompt}
 
 
-def idFunc(scope, args):
-    print(scope.query("*IDN?"))
+# ---------------------------------------------------------------------------
+# Action registry
+# ---------------------------------------------------------------------------
 
 
 def clearFunc(scope, args):
@@ -304,7 +362,6 @@ def runFunc(scope, args):
     print("Acquisition running.")
 
 
-#stores all possible actions and there corrisponding cmd string
 actionMap = {
     "clear": Action(0, clearFunc, "Clear console contents",
         usage="clear",
@@ -367,7 +424,7 @@ actionMap = {
 def getActionNames() -> []:
     return actionMap.keys()
 
-  
+
 def helpFunc(scope, args):
     print("""o-see-lloscope -- help
 
