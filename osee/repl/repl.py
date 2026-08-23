@@ -1,4 +1,4 @@
-import actions
+import osee.actions.actions as actions
 import readline
 
 # will need to read in user input
@@ -18,7 +18,7 @@ def autocomplete(text, state):
 
 def startREPL(scope):
     print("o-see-lloscope REPL, type a command and press enter to execute an action.")
-    print("(type 'help' for action manual)")
+    print("(type 'help [action]' for action usage or 'help all' for complete action usage)")
 
     while True:
         try:

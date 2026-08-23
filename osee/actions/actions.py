@@ -1,14 +1,14 @@
 import os
-import numpy as np
-import matplotlib.pyplot as plt
 from pathlib import Path
 import numpy as np
+import osee.actions.llm as llm
+import matplotlib.pyplot as plt
 import threading
 
-try:
-    from classify_action import classifyFunc
-except ImportError:
-    classifyFunc = None  # classifier not set up yet -- registered conditionally below
+#try:
+#    from classify_action import classifyFunc
+#except ImportError:
+#    classifyFunc = None  # classifier not set up yet -- registered conditionally below
 
 
 # ---------------------------------------------------------------------------
@@ -137,10 +137,8 @@ def captureFunc(scope, args):
     plt.ylabel("Voltage (V)")
     plt.title("Rigol DS1054Z capture")
     plt.savefig("capture.png", dpi=150)
-    plt.close()
-    np.savetxt("capture.csv", np.column_stack([time_s, volts]),
-               delimiter=",", header="time_s,volts")
-
+    plt.close()  # free memory, avoids figure buildup
+    np.savetxt("capture.csv", np.column_stack([time_s, volts]), delimiter=",", header="time_s,volts")
     
 triggerModes = {
     "edge": "EDGe",
@@ -268,7 +266,7 @@ def llmDescribeCapture(scope, args):
     usage: describe
     Enters a conversation with an LLM about the last captured graph.
     """
-    chat = llm()
+    chat = llm.llm()
 
     if not Path("capture.png").is_file():
         print("capture does not exist! Please capture waveform first.")
@@ -361,6 +359,27 @@ def runFunc(scope, args):
     scope.write(":RUN")
     print("Acquisition running.")
 
+ 
+def helpFunc(scope, args):
+    cmd = args[0]
+    action = actionMap.get(cmd)
+
+    if cmd == "all":
+        for key, value in actionMap.items():
+            print(f"{key}: {value.des}")
+            if value.usage:
+                print(f"    usage: {value.usage}")
+            if value.example:
+                print(f"    e.g.   {value.example}")
+            print()
+    else:
+        print(f"{cmd}: {action.des}")
+        if action.usage:
+            print(f"    usage: {action.usage}")
+        if action.example:
+            print(f"    e.g.   {action.example}")
+        print()
+
 
 actionMap = {
     "clear": Action(0, clearFunc, "Clear console contents",
@@ -425,21 +444,7 @@ def getActionNames() -> []:
     return actionMap.keys()
 
 
-def helpFunc(scope, args):
-    print("""o-see-lloscope -- help
-
-    An application for the Visually impaired to allow full access to oscilloscope measuring
-    """)
-    for key, value in actionMap.items():
-        print(f"{key}: {value.des}")
-        if value.usage:
-            print(f"    usage: {value.usage}")
-        if value.example:
-            print(f"    e.g.   {value.example}")
-        print()
-
-#unique error action that is the default value for the map
 errorAction=Action(0, errorFunc, "(error)")
 
 #add to map after so helpFunc has accesss to the map
-actionMap["help"] = Action(0, helpFunc, "Provides help messages for each available command")
+actionMap["help"] = Action(1, helpFunc, "Provides help messages for each available command")

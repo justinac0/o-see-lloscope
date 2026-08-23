@@ -1,5 +1,5 @@
 import numpy as np
-from actions import autoFunc, measureFunc, captureFunc, divScaleFunc, couplingFunc
+from osee.actions.actions import autoFunc, measureFunc, captureFunc, divScaleFunc, couplingFunc
 
 
 class FakeScope:
