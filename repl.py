@@ -33,7 +33,7 @@ def startREPL(scope):
             cmd = textInput[0]
             args = textInput[1:]
 
-            if cmd == "q" or cmd == "quit":
+            if cmd == "q" or cmd == "quit" or cmd == "exit":
                 print("exiting...")
                 break
 
