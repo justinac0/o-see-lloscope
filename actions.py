@@ -5,14 +5,11 @@ from llm import llm
 from pathlib import Path
 
 
-# NOTE(everyone): actions interacting with channel data assume we
-# use channel 1 always.
-
-
 # Globals
 previous_voltage_capture: list = []
 
 # Action Functions
+
 
 def testFunc(scope, args):
     print("test: ", args[0])
@@ -29,6 +26,7 @@ def autoFunc(scope, argse):
 def measure(scope, item, channel="CHANnel1"):
     return float(scope.query(f":MEASure:ITEM? {item},{channel}"))
 
+  
 def measureFunc(scope, args):
     scope.write(":AUToscale")
     vpp  = measure(scope, "VPP")
@@ -102,6 +100,7 @@ def triggerFunc(scope, args):
     level = int(args[2]) 
     scope.write(":TRIGger:" + mode + ":SOURce CHANnel1; SLOPe POSitive; LEVel " + level)
 
+
 def playPrevCapture(scope, args):
     import audio.pitch as pitch
     """
@@ -115,6 +114,7 @@ def playPrevCapture(scope, args):
 
     pitch.play_from_voltage(previous_voltage_capture)
 
+    
 def llmDescribeCapture(scope, args):
     chat = llm()
 
@@ -135,29 +135,46 @@ def llmDescribeCapture(scope, args):
         if (prompt == 'q') or (prompt == 'Q'): break
         chat.query(prompt=prompt)
 
+        
 def idFunc(scope, args):
     print(scope.query("*IDN?"))
-        
+
+    
 class Action :
     def __init__(self, argc, func, des):
         self.argc = argc
         self.func = func
         self.des = des
 
+
 #stores all possible actions and there corrisponding cmd string
 actionMap = {
     "test": Action(1, testFunc, "A test action"),
-    "id": Action(0, idFunc, "Prints the identity of the device connected"),
+    "id": Action(0, idFunc, "Identify the device connected"),    
     "auto": Action(0, autoFunc, "Adjusts scale and position to view the signal"),
     "measure": Action(0, measureFunc, "Provides a summary of the signal"),
-    "capture": Action(0, captureFunc, "Saves a png and csv and updates the program state"),
+    "capture": Action(1, captureFunc, "Saves a png and csv and updates the program state"),
     "trigger": Action(3, triggerFunc, "Configures a trigger on channel 1"),
     "playback": Action(0, playPrevCapture, "Plays an audio representation of the signal"),
     "describe": Action(0, llmDescribeCapture, "Enters a conversation with a LLM to allow the generated graph to be queried."),
 }
 
+
+def getActionNames() -> []:
+    return actionMap.keys()
+
+  
+def helpFunc(scope, args):
+    print("""o-see-lloscope -- help
+    
+    An application for the Visually impared to allow full access to oscilloscope measuring
+    """)
+    for key, value in actionMap.items():
+        print (key + " : ", value.argc, " args.\n    " + value.des)
+
 #unique error action that is the default value for the map
 errorAction=Action(0, errorFunc, "Error")
+
 
 def helpFunc(scope, args):
     print("""o-see-lloscope -- help
@@ -171,3 +188,5 @@ def helpFunc(scope, args):
         actionMap["help"] = Action(0, helpFunc, "prints help messages for all commands")
 
 
+#add to map after so helpFunc has accesss to the map
+actionMap["help"] = Action(0, helpFunc, "Provides help messages for each available command")

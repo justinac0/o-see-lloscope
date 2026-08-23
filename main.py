@@ -6,6 +6,7 @@
 import pyvisa
 import repl
 
+
 if __name__ == "__main__":
     # connecting to device and takinng some basic measurements
     rm = pyvisa.ResourceManager()
@@ -18,4 +19,3 @@ if __name__ == "__main__":
         repl.startREPL(scope)
     else:
         print("no devices found, is your oscilloscope connected?")
-
